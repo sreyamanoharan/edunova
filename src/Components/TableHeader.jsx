@@ -1,35 +1,47 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import axiosInstance from '../api/axios';
 import { FaSearch, FaFilter } from 'react-icons/fa'; 
 import { IoIosAdd } from "react-icons/io";
 import { CiSearch } from "react-icons/ci";
 import ProfileModal from './ProfileModal';
+import Select from 'react-select';
 
-const TableHeader = () => {
+const availableTeams = [
+  { value: 'design', label: 'Design' },
+  { value: 'product', label: 'Product' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'technology', label: 'Technology' },
+];
+
+const TableHeader = ({ refreshTable }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
-  const [imageURL, setImageURL] = useState(''); 
+  const [imageURL, setImageURL] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, control } = useForm();
+  const [selectedTeams, setSelectedTeams] = useState([]);
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'edunova'); 
-    console.log(formData);
-    
+    formData.append('upload_preset', 'edunova');
 
     try {
-      const result = await axiosInstance.post(
-        'https://api.cloudinary.com/v1_1/ds0dvm4ol/image/upload?upload',
-        formData
-        );
-      console.log(result,'jjjjjjjjjjjjjjjjjjjjjjjj');
-      
+      const response = await axiosInstance.post(
+        'https://api.cloudinary.com/v1_1/ds0dvm4ol/image/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Cloudinary response:', response.data);
       return response.data.secure_url;
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image:', error.response ? error.response.data : error.message);
       return null;
     }
   };
@@ -41,17 +53,20 @@ const TableHeader = () => {
         imageUrl = await uploadToCloudinary(selectedFile);
       }
 
-      const response = await axiosInstance.post('/register', {
+      await axiosInstance.post('/register', {
         ...data,
         profilePicture: imageUrl,
+        teams: selectedTeams.map(team => team.value) // Extract the value from the selected teams
       });
 
-      console.log('Profile updated:', response.data);
+      console.log('Profile updated');
       handleCloseModal();
       reset();
       setImagePreview('');
-      setSelectedFile(null); 
-      setImageURL(''); 
+      setSelectedFile(null);
+      setImageURL('');
+      setSelectedTeams([]);
+      refreshTable(); // Call the refresh function
     } catch (error) {
       console.error('Error updating profile:', error);
     }
@@ -63,23 +78,24 @@ const TableHeader = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setImagePreview(''); 
-    setSelectedFile(null); 
-    setImageURL(''); 
+    setImagePreview('');
+    setSelectedFile(null);
+    setImageURL('');
+    setSelectedTeams([]);
   };
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setImagePreview(URL.createObjectURL(file)); 
-      setSelectedFile(file); 
+      setImagePreview(URL.createObjectURL(file));
+      setSelectedFile(file);
     }
   };
 
   const handleRemovePhoto = () => {
     setImagePreview('');
-    setSelectedFile(null); 
-    setImageURL(''); 
+    setSelectedFile(null);
+    setImageURL('');
   };
 
   return (
@@ -156,7 +172,12 @@ const TableHeader = () => {
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">Role</label>
-                <input type="text" {...register('role')} className="border border-gray-300 rounded p-2 w-full" placeholder="Enter role" />
+                <select {...register('role')} className="border border-gray-300 rounded p-2 w-full">
+                  <option value="product-designer">Product Designer</option>
+                  <option value="product-manager">Product Manager</option>
+                  <option value="frontend-developer">Frontend Developer</option>
+                  <option value="backend-developer">Backend Developer</option>
+                </select>
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">Status</label>
@@ -167,7 +188,25 @@ const TableHeader = () => {
               </div>
               <div className="col-span-2">
                 <label className="block text-gray-700 mb-2">Teams</label>
-                <input type="text" {...register('teams')} className="border border-gray-300 rounded p-2 w-full" placeholder="Enter teams" />
+                <Controller
+                  name="teams"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      isMulti
+                      options={availableTeams}
+                      value={selectedTeams}
+                      onChange={(selectedOptions) => {
+                        setSelectedTeams(selectedOptions || []);
+                        field.onChange(selectedOptions);
+                      }}
+                      className="basic-single"
+                      classNamePrefix="select"
+                      placeholder="Select teams"
+                    />
+                  )}
+                />
               </div>
             </div>
             <div className="flex justify-end">
