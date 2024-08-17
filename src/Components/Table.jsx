@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
 import axiosInstance from '../api/axios';
 import TableHeader from './TableHeader';
-import ProfileModal from './ProfileModal';
+import EditModal from './EditModal';
 import ConfirmationModal from './ConfirmationModal';
 import PersonalInfoModal from './PersonalInfoModal';
 import { FaEdit, FaTrash } from 'react-icons/fa';
@@ -79,7 +79,7 @@ const Table = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState(null);
   const [filter, setFilter] = useState({ role: null, teams: [] });
@@ -116,7 +116,7 @@ const Table = () => {
 
   const handleEditClick = (member) => {
     setSelectedMember(member);
-    setIsProfileModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
   const handleDeleteClick = (id) => {
@@ -137,7 +137,7 @@ const Table = () => {
   const handleUpdate = async (updatedMember) => {
     try {
       await axiosInstance.put(`/members/${updatedMember._id}`, updatedMember);
-      setIsProfileModalOpen(false);
+      setIsEditModalOpen(false);
       fetchData();
     } catch (error) {
       console.error('Error updating member:', error);
@@ -194,10 +194,11 @@ const Table = () => {
           ))}
         </tbody>
       </table>
-      {isProfileModalOpen && (
-        <ProfileModal
+      {isEditModalOpen && (
+        <EditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
           member={selectedMember}
-          onClose={() => setIsProfileModalOpen(false)}
           onSave={handleUpdate}
         />
       )}
