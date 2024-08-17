@@ -1,9 +1,9 @@
 import React from 'react';
+import { FaTimes } from 'react-icons/fa'; // Importing the close icon
 
 const PersonalInfoModal = ({ member, onClose }) => {
   if (!member) return null;
 
-  // Simple runtime check for member object
   if (typeof member !== 'object' || !member.profilePicture || !member.name || !member.email || !member.status || !member.role || !Array.isArray(member.teams)) {
     console.error('Invalid member object');
     return null;
@@ -11,49 +11,65 @@ const PersonalInfoModal = ({ member, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-8 rounded-l-lg shadow-lg w-[50%] h-full overflow-y-auto">
-        {/* Header with profile picture, userId, and role */}
-        <div className="bg-blue-500 text-white p-4 flex items-center">
+      <div className="relative bg-white p-8 rounded-l-lg shadow-lg overflow-y-auto w-[700px] h-[600px]">
+        {/* Header with profile picture, name, role, and close icon */}
+        <div className="relative bg-blue-800 text-white p-4 flex items-center rounded-tl-lg">
           <img
             src={member.profilePicture}
             alt={member.name}
             className="w-16 h-16 rounded-full mr-4"
           />
-          <div className="flex flex-col flex-grow">
-            <div className="flex items-center text-lg font-semibold">
-              <span className="mr-4">{member.userId}</span>
-              <span className="mx-2 border-l border-white h-6"></span>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold">{member.name}</span>
+            <div className="flex items-center text-sm">
+               user.Id
+              <span className="mx-2">|</span>
               <span>{member.role}</span>
+              <span>{/* Type of role here if applicable */}</span>
             </div>
           </div>
-        </div>
-        
-        {/* Modal content */}
-        <h2 className="text-2xl font-semibold mb-6 mt-6">Personal Information</h2>
-        <div className="mb-6 flex items-center">
-          <img
-            src={member.profilePicture}
-            alt={member.name}
-            className="w-24 h-24 rounded-full mr-6"
-          />
-          <div>
-            <h3 className="text-xl font-semibold">{member.name}</h3>
-            <p className="text-gray-700">Email: {member.email}</p>
-            <p className="text-gray-700">Status: {member.status}</p>
-            <p className="text-gray-700">Teams: {member.teams.join(', ')}</p>
-          </div>
-        </div>
-        <div className="flex justify-end">
+          {/* Close icon */}
           <button
             type="button"
             onClick={onClose}
-            className="bg-gray-300 text-gray-700 rounded px-6 py-2"
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
           >
-            Close
+            <FaTimes size={20} />
           </button>
         </div>
+
+        <h2 className="text-2xl font-normal mb-6 mt-6">Personal Information</h2>
+          <div className="mb-6">
+            <h3 className="text-gray-700 border-b border-gray-300 pb-2 mb-2 flex">
+              <span>Date Of Birth</span>
+              <span className="mx-2">:</span>
+              <span>24-02-1987</span>
+            </h3>
+            <h3 className="text-gray-700 border-b border-gray-300 pb-2 mb-2 flex">
+              <span>Gender</span>
+              <span className="mx-2">:</span>
+              <span>Female</span>
+            </h3>
+            <h3 className="text-gray-700 border-b border-gray-300 pb-2 mb-2 flex">
+              <span>Nationality</span>
+              <span className="mx-2">:</span>
+              <span>Canadian</span>
+            </h3>
+            <h3 className="text-gray-700 border-b border-gray-300 pb-2 mb-2 flex">
+              <span>Email</span>
+              <span className="mx-2">:</span>
+              <span>{member.email}</span>
+            </h3>
+            <h3 className="text-gray-700 border-b border-gray-300 pb-2 flex">
+              <span>Contact Number</span>
+              <span className="mx-2">:</span>
+              <span>789654321</span>
+            </h3>
+          </div>
+
+        </div>
       </div>
-    </div>
+
   );
 };
 

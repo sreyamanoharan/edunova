@@ -45,7 +45,7 @@ const columns = (onEditClick, onDeleteClick, onRowClick) => [
     ),
   }),
   columnHelper.accessor('actions', {
-    header: 'Actions',
+    header: '    ',
     cell: ({ row }) => (
       <div
         className="flex gap-2"
@@ -159,19 +159,19 @@ const Table = () => {
   });
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full border p-5 m-5">
       <TableHeader
         refreshTable={fetchData}
         onSearchChange={setSearchQuery}
         onFilterChange={setFilter}
         memberCount={filteredData.length}
       />
-      <table className="min-w-full border border-gray-200">
+      <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map(header => (
-                <th key={header.id} className="border border-gray-300 p-2 text-gray-700">
+                <th key={header.id} className=" border-gray-300 p-2 text-sm text-gray-700">
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
@@ -179,14 +179,16 @@ const Table = () => {
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map(row => (
+          {table.getRowModel().rows.map((row, index) => (
             <tr
               key={row.id}
-              className="border-b border-gray-300 cursor-pointer hover:bg-gray-100"
+              className={`border border-gray-300 cursor-pointer ${
+                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+              } hover:bg-gray-100`}
               onClick={(e) => handleRowClick(e, row.original)}
             >
               {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className="border border-gray-300 p-2">
+                <td key={cell.id} className="border-gray-300 p-2 text-sm text-gray-700 text-center">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

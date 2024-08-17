@@ -6,13 +6,12 @@ import Table from '../Components/Table'
 
 const PeopleDirectory = () => {
   return (
-    <div>
-        <Navbar/>
-        <div className='flex'>
-        <Sidebar/>
-        <Table/>
-        </div>
-       
+    <div className='h-screen overflow-hidden'>
+    <Navbar/>
+    <div className='flex box-border'>
+    <Sidebar/>
+    <Table/>
+    </div>
     </div>
   )
 }
