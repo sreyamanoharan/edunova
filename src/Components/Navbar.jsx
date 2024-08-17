@@ -11,7 +11,7 @@ const Navbar = () => {
                 <div className='text-lg flex items-center justify-between pr-4 w-[160px] pl-9'>
                     <CiBellOn />
                     <IoIosContact/>
-                    <h1>Name</h1>
+                    <h1>Jane doe</h1>
                 </div>
 
             </div>

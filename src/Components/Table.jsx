@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
 import axiosInstance from '../api/axios';
 import TableHeader from './TableHeader';
 import ProfileModal from './ProfileModal';
-import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
+import ConfirmationModal from './ConfirmationModal';
+import PersonalInfoModal from './PersonalInfoModal';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const columnHelper = createColumnHelper();
 
-const columns = (onEditClick, onDeleteClick) => [
+const columns = (onEditClick, onDeleteClick, onRowClick) => [
   columnHelper.accessor('name', {
     header: 'Name',
     cell: ({ row }) => (
@@ -45,16 +47,25 @@ const columns = (onEditClick, onDeleteClick) => [
   columnHelper.accessor('actions', {
     header: 'Actions',
     cell: ({ row }) => (
-      <div className="flex gap-2">
+      <div
+        className="flex gap-2"
+        data-column="actions"
+      >
         <button
-          className="text-blue-500"
-          onClick={() => onEditClick(row.original)}
+          className="text-gray-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditClick(row.original);
+          }}
         >
           <FaEdit />
         </button>
         <button
-          className="text-red-500"
-          onClick={() => onDeleteClick(row.original._id)}
+          className="text-gray-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteClick(row.original._id);
+          }}
         >
           <FaTrash />
         </button>
@@ -65,27 +76,59 @@ const columns = (onEditClick, onDeleteClick) => [
 
 const Table = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
+  const [filter, setFilter] = useState({ role: null, teams: [] });
+  const [isPersonalInfoModalOpen, setIsPersonalInfoModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
       const response = await axiosInstance.get('/members');
       setData(response.data.Members);
+      setFilteredData(response.data.Members); // Initialize filtered data
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    const filtered = data.filter((member) => {
+      const searchMatch = Object.values(member).some((value) =>
+        String(value).toLowerCase().includes(lowercasedQuery)
+      );
+
+      const roleMatch = filter.role ? member.role === filter.role : true;
+      const teamsMatch = filter.teams.length > 0 ? filter.teams.some(team => member.teams.includes(team)) : true;
+
+      return searchMatch && roleMatch && teamsMatch;
+    });
+    setFilteredData(filtered);
+  }, [searchQuery, filter, data]);
+
   const handleEditClick = (member) => {
     setSelectedMember(member);
-    setIsModalOpen(true);
+    setIsProfileModalOpen(true);
   };
 
-  const handleDeleteClick = async (id) => {
+  const handleDeleteClick = (id) => {
+    setMemberToDelete(id);
+    setIsConfirmationModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
-      await axiosInstance.delete(`/members/${id}`);
-      fetchData(); // Refresh the data
+      await axiosInstance.delete(`/members/${memberToDelete}`);
+      setIsConfirmationModalOpen(false);
+      fetchData();
     } catch (error) {
       console.error('Error deleting member:', error);
     }
@@ -94,32 +137,41 @@ const Table = () => {
   const handleUpdate = async (updatedMember) => {
     try {
       await axiosInstance.put(`/members/${updatedMember._id}`, updatedMember);
-      setIsModalOpen(false);
-      fetchData(); // Refresh the data
+      setIsProfileModalOpen(false);
+      fetchData();
     } catch (error) {
       console.error('Error updating member:', error);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const handleRowClick = (e, member) => {
+    // Check if the click was inside an element with the data-column="actions"
+    if (!e.target.closest('[data-column="actions"]')) {
+      setSelectedMember(member);
+      setIsPersonalInfoModalOpen(true);
+    }
+  };
 
   const table = useReactTable({
-    data,
-    columns: columns(handleEditClick, handleDeleteClick),
+    data: filteredData, // Use filtered data here
+    columns: columns(handleEditClick, handleDeleteClick, handleRowClick),
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <div className="flex flex-col">
-      <TableHeader refreshTable={fetchData} />
+    <div className="flex flex-col w-full">
+      <TableHeader
+        refreshTable={fetchData}
+        onSearchChange={setSearchQuery}
+        onFilterChange={setFilter}
+        memberCount={filteredData.length}
+      />
       <table className="min-w-full border border-gray-200">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map(header => (
-                <th key={header.id} className="border border-gray-300 p-2">
+                <th key={header.id} className="border border-gray-300 p-2 text-gray-700">
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
@@ -128,7 +180,11 @@ const Table = () => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
+            <tr
+              key={row.id}
+              className="border-b border-gray-300 cursor-pointer hover:bg-gray-100"
+              onClick={(e) => handleRowClick(e, row.original)}
+            >
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id} className="border border-gray-300 p-2">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -138,11 +194,24 @@ const Table = () => {
           ))}
         </tbody>
       </table>
-      {isModalOpen && (
+      {isProfileModalOpen && (
         <ProfileModal
           member={selectedMember}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setIsProfileModalOpen(false)}
           onSave={handleUpdate}
+        />
+      )}
+      {isConfirmationModalOpen && (
+        <ConfirmationModal
+          isOpen={isConfirmationModalOpen}
+          onClose={() => setIsConfirmationModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+      {isPersonalInfoModalOpen && (
+        <PersonalInfoModal
+          member={selectedMember}
+          onClose={() => setIsPersonalInfoModalOpen(false)}
         />
       )}
     </div>
@@ -150,5 +219,3 @@ const Table = () => {
 };
 
 export default Table;
-
-
