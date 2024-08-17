@@ -3,7 +3,7 @@ import { FaCamera, FaTrashAlt } from 'react-icons/fa';
 import Select from 'react-select';
 
 const EditModal = ({ isOpen, onClose, member, onSave }) => {
-  // Define roles and teams directly within the component
+
   const availableRoles = [
     { label: 'Product Designer', value: 'Product Designer' },
     { label: 'Product Manager', value: 'Product Manager' },
@@ -17,7 +17,7 @@ const EditModal = ({ isOpen, onClose, member, onSave }) => {
     { label: 'Product', value: 'Product' },
     { label: 'Marketing', value: 'Marketing' },
     { label: 'Technology', value: 'Technology' }
-    // Add more teams as needed
+
   ];
 
   const [formData, setFormData] = useState({
@@ -88,7 +88,7 @@ const EditModal = ({ isOpen, onClose, member, onSave }) => {
             handleSave();
           }}
         >
-          {/* Profile Picture */}
+   
           <div className="mb-4 flex flex-col items-center">
             <label className="block text-gray-700 mb-2">Profile Picture</label>
             <div className="relative w-40 h-28 rounded-full bg-gray-200">
@@ -141,7 +141,6 @@ const EditModal = ({ isOpen, onClose, member, onSave }) => {
             </div>
           </div>
 
-          {/* Form Fields */}
           <div className="mb-4 flex gap-4">
             <div className="flex-1">
               <label className="block text-gray-700">Name</label>

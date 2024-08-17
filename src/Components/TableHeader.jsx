@@ -58,7 +58,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
   const [selectedFilterTeams, setSelectedFilterTeams] = useState([]);
   const filterRef = useRef();
 
-  // ... (rest of the component code)
+
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append('file', file);

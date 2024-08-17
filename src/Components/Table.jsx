@@ -89,7 +89,7 @@ const Table = () => {
     try {
       const response = await axiosInstance.get('/members');
       setData(response.data.Members);
-      setFilteredData(response.data.Members); // Initialize filtered data
+      setFilteredData(response.data.Members);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -145,7 +145,6 @@ const Table = () => {
   };
 
   const handleRowClick = (e, member) => {
-    // Check if the click was inside an element with the data-column="actions"
     if (!e.target.closest('[data-column="actions"]')) {
       setSelectedMember(member);
       setIsPersonalInfoModalOpen(true);
@@ -153,7 +152,7 @@ const Table = () => {
   };
 
   const table = useReactTable({
-    data: filteredData, // Use filtered data here
+    data: filteredData, 
     columns: columns(handleEditClick, handleDeleteClick, handleRowClick),
     getCoreRowModel: getCoreRowModel(),
   });

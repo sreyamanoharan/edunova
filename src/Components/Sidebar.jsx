@@ -3,10 +3,10 @@ import { TbTableFilled } from 'react-icons/tb';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
-  // State to manage the selected item
+
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Initialize useNavigate hook
+
   const navigate = useNavigate();
 
   return (

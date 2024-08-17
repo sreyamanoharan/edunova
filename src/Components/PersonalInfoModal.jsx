@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTimes } from 'react-icons/fa'; // Importing the close icon
+import { FaTimes } from 'react-icons/fa'; 
 
 const PersonalInfoModal = ({ member, onClose }) => {
   if (!member) return null;
@@ -12,7 +12,7 @@ const PersonalInfoModal = ({ member, onClose }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
       <div className="relative bg-white p-8 rounded-l-lg shadow-lg overflow-y-auto w-[700px] h-[600px]">
-        {/* Header with profile picture, name, role, and close icon */}
+       
         <div className="relative bg-blue-800 text-white p-4 flex items-center rounded-tl-lg">
           <img
             src={member.profilePicture}
@@ -25,10 +25,10 @@ const PersonalInfoModal = ({ member, onClose }) => {
                user.Id
               <span className="mx-2">|</span>
               <span>{member.role}</span>
-              <span>{/* Type of role here if applicable */}</span>
+              <span>{}</span>
             </div>
           </div>
-          {/* Close icon */}
+     
           <button
             type="button"
             onClick={onClose}
