@@ -65,9 +65,9 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
   
       await axiosInstance.post('/register', {
         ...data,
-        role: data.role.value, // Extract the value from the role object
+        role: data.role.value, 
         profilePicture: imageUrl,
-        teams: selectedTeams.map(team => team.value) // Ensure only the team values are sent
+        teams: selectedTeams.map(team => team.value) 
       });
   
       handleCloseModal();
@@ -142,7 +142,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
       <div className="flex items-center justify-between p-4 border-b border-gray-300">
         <div className="flex items-center space-x-2">
           <h2 className="text-xl font-bold">Team Members</h2>
-          <span className="text-gray-600">({memberCount} members)</span>
+          <button className='bg-blue-300 rounded-md'>{memberCount} members</button>
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative w-full max-w-xs">
