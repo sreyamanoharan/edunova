@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import axiosInstance from '../api/axios';
 import Select from 'react-select';
 import { IoIosAdd } from "react-icons/io";
 import { CiSearch } from "react-icons/ci";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaCamera, FaTrashAlt } from "react-icons/fa";
 import ProfileModal from './ProfileModal';
-import { FaCamera, FaTrashAlt } from 'react-icons/fa';
 
 const availableTeams = [
   { value: 'design', label: 'Design' },
@@ -22,18 +23,42 @@ const availableRoles = [
   { value: 'backend-developer', label: 'Backend Developer' },
 ];
 
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  role: z.object({
+    value: z.string(),
+    label: z.string()
+  }).refine((data) => data.value !== '', {
+    message: "Role is required",
+    path: ['value']
+  }),
+  status: z.enum(["active", "inactive"]),
+  teams: z.array(
+    z.object({
+      value: z.string(),
+      label: z.string()
+    })
+  ).min(1, "Select at least one team"),
+  profilePicture: z.string().optional()
+});
+
 const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const { register, handleSubmit, reset, control } = useForm();
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
+    resolver: zodResolver(formSchema)
+  });
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState(''); // 'role' or 'teams'
+  const [selectedFilter, setSelectedFilter] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedFilterTeams, setSelectedFilterTeams] = useState([]);
+  const filterRef = useRef();
 
+  // ... (rest of the component code)
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -68,7 +93,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
         ...data,
         role: data.role.value, 
         profilePicture: imageUrl,
-        teams: selectedTeams.map(team => team.value) 
+        teams: data.teams.map(team => team.value) 
       });
   
       handleCloseModal();
@@ -77,19 +102,16 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
       setSelectedFile(null);
       setImageURL('');
       setSelectedTeams([]);
-      refreshTable(); // Call the refresh function to update the table
+      refreshTable();
     } catch (error) {
       console.error('Error adding member:', error);
     }
   };
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
+  const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    reset();  // Reset the form when closing the modal
+    reset();
     setImagePreview('');
     setSelectedFile(null);
     setImageURL('');
@@ -113,23 +135,21 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
   const handleFilterChange = () => {
     onFilterChange({
       role: selectedRole,
-      teams: selectedFilterTeams.map(team => team.value) // Ensure team values are extracted
+      teams: selectedFilterTeams.map(team => team.value)
     });
-    setFilterOpen(false); // Close the filter dropdown after applying filter
+    setFilterOpen(false);
   };
 
   const handleFilterOptionClick = (filterType) => {
     setSelectedFilter(filterType);
-    setFilterOpen(true); // Open filter dropdown
+    setFilterOpen(true);
   };
 
   const handleClickOutside = (event) => {
     if (filterRef.current && !filterRef.current.contains(event.target)) {
-      setFilterOpen(false); // Close filter dropdown if clicked outside
+      setFilterOpen(false);
     }
   };
-
-  const filterRef = useRef();
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
@@ -176,7 +196,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
                   >
                     Teams
                   </button>
-
+  
                   {selectedFilter === 'role' && (
                     <div>
                       <h3 className="text-gray-700 mb-2">Select Role</h3>
@@ -197,7 +217,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
                       </div>
                     </div>
                   )}
-
+  
                   {selectedFilter === 'teams' && (
                     <div>
                       <h3 className="text-gray-700 mb-2">Select Teams</h3>
@@ -224,7 +244,7 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
                       </div>
                     </div>
                   )}
-
+  
                   <div className="mt-4">
                     <button
                       onClick={handleFilterChange}
@@ -248,143 +268,148 @@ const TableHeader = ({ refreshTable, onSearchChange, onFilterChange, memberCount
       </div>
       {isModalOpen && (
         <ProfileModal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4 flex flex-col items-center">
-            <label className="block text-gray-700 mb-2">Profile Picture</label>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-4 flex flex-col items-center">
+              <label className="block text-gray-700 mb-2">Profile Picture</label>
       
-            <div className="relative w-40 h-28 rounded-full bg-gray-200">
-              {imagePreview ? (
-                <>
-                  <img
-                    src={imagePreview}
-                    alt="Profile Preview"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                  <div className="absolute top-0 right-0 bg-black bg-opacity-50 w-full h-full flex items-center justify-center rounded-full">
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
-                    >
-                      <FaTrashAlt size={16} />
-                    </button>
+              <div className="relative w-40 h-28 rounded-full bg-gray-200">
+                {imagePreview ? (
+                  <>
+                    <img
+                      src={imagePreview}
+                      alt="Profile Preview"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                    <div className="absolute top-0 right-0 bg-black bg-opacity-50 w-full h-full flex items-center justify-center rounded-full">
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                      >
+                        <FaTrashAlt size={16} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    <span>No image</span>
                   </div>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <span>No image</span>
-                </div>
-              )}
-            </div>
-            <input
-              type="file"
-              onChange={handleImageChange}
-              accept="image/*"
-              className="hidden" // Hide the file input
-            />
-            <div className="mt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => document.querySelector('input[type="file"]').click()}
-                className="bg-gray-200 text-gray-500 rounded px-4 py-2 flex items-center gap-2"
-              >
-                <FaCamera size={16} />
-                Change Picture
-              </button>
-              <button
-                type="button"
-                onClick={handleRemovePhoto}
-                className="bg-gray-200 text-gray-500 rounded px-4 py-2 flex items-center gap-2"
-              >
-                <FaTrashAlt size={16} />
-                Remove Picture
-              </button>
-            </div>
-          </div>
-      
-          <div className="mb-4 flex gap-4">
-            <div className="flex-1">
-              <label className="block text-gray-700">Name</label>
+                )}
+              </div>
               <input
-                type="text"
-                {...register('name')}
-                className="border border-gray-300 rounded w-full p-2"
-                required
+                type="file"
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden"
               />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => document.querySelector('input[type="file"]').click()}
+                  className="bg-gray-200 text-gray-500 rounded px-4 py-2 flex items-center gap-2"
+                >
+                  <FaCamera size={16} />
+                  Change Picture
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="bg-gray-200 text-gray-500 rounded px-4 py-2 flex items-center gap-2"
+                >
+                  <FaTrashAlt size={16} />
+                  Remove Picture
+                </button>
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="block text-gray-700">Email</label>
-              <input
-                type="email"
-                {...register('email')}
-                className="border border-gray-300 rounded w-full p-2"
-                required
-              />
-            </div>
-          </div>
       
-          <div className="mb-4 flex gap-4">
-            <div className="flex-1">
-              <label className="block text-gray-700">Role</label>
+            <div className="mb-4 flex gap-4">
+              <div className="flex-1">
+                <label className="block text-gray-700">Name</label>
+                <input
+                  type="text"
+                  {...register('name')}
+                  className="border border-gray-300 rounded w-full p-2"
+                />
+                {errors.name && <span className="text-red-500">{errors.name.message}</span>}
+              </div>
+              <div className="flex-1">
+                <label className="block text-gray-700">Email</label>
+                <input
+                  type="email"
+                  {...register('email')}
+                  className="border border-gray-300 rounded w-full p-2"
+                />
+                {errors.email && <span className="text-red-500">{errors.email.message}</span>}
+              </div>
+            </div>
+      
+            <div className="mb-4 flex gap-4">
+              <div className="flex-1">
+                <label className="block text-gray-700">Role</label>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      options={availableRoles}
+                      className="border border-gray-300 rounded w-full p-2"
+                      placeholder="Select role"
+                    />
+                  )}
+                />
+                {errors.role && <span className="text-red-500">{errors.role.value?.message}</span>}
+              </div>
+              <div className="flex-1">
+                <label className="block text-gray-700">Status</label>
+                <select
+                  {...register('status')}
+                  className="border border-gray-300 rounded w-full p-2"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                {errors.status && <span className="text-red-500">{errors.status.message}</span>}
+              </div>
+            </div>
+      
+            <div className="mb-4">
+              <label className="block text-gray-700">Teams</label>
               <Controller
-                name="role"
+                name="teams"
                 control={control}
                 render={({ field }) => (
                   <Select
+                    isMulti
                     {...field}
-                    options={availableRoles}
+                    options={availableTeams}
                     className="border border-gray-300 rounded w-full p-2"
-                    placeholder="Select role"
+                    placeholder="Select teams"
                   />
                 )}
               />
+              {errors.teams && <span className="text-red-500">{errors.teams.message}</span>}
             </div>
-            <div className="flex-1">
-              <label className="block text-gray-700">Status</label>
-              <select
-                {...register('status')}
-                className="border border-gray-300 rounded w-full p-2"
-                required
+      
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="bg-gray-300 text-gray-700 rounded px-4 py-2"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                Close
+              </button>
+              <button
+                type="submit"
+                className="bg-violet-600 text-white rounded px-4 py-2"
+              >
+                Save
+              </button>
             </div>
-          </div>
-      
-          <div className="mb-4">
-            <label className="block text-gray-700">Teams</label>
-            <Select
-              isMulti
-              options={availableTeams}
-              value={selectedTeams}
-              onChange={setSelectedTeams}
-              className="border border-gray-300 rounded w-full p-2"
-              placeholder="Select teams"
-            />
-          </div>
-      
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="bg-gray-300 text-gray-700 rounded px-4 py-2"
-            >
-              Close
-            </button>
-            <button
-              type="submit"
-              className="bg-violet-600 text-white rounded px-4 py-2"
-            >
-              Save
-            </button>
-          </div>
-        </form>
-      </ProfileModal>
-      
+          </form>
+        </ProfileModal>
       )}
     </>
   );
-};
-
+}
 export default TableHeader;
